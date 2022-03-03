@@ -110,7 +110,9 @@ public class QueryEngine {
           precision = intersect.size() * 1.0 / derivedSections.size();
           recall = intersect.size() * 1.0 / actualSections.size();
           jacaard = intersect.size() * 1.0 / union.size();
-          f1 = 2 * precision * recall / (precision + recall);
+          if (precision + recall != 0) {
+            f1 = 2 * precision * recall / (precision + recall);
+          }
         }
 
         if (queryCount < 100) {
