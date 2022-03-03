@@ -40,6 +40,7 @@ public class QueryEngine {
       double precisionSum = 0;
       double recallSum = 0;
       double jacaardSum = 0;
+      double f1Sum = 0;
       int queryCount = 0;
 
       Directory dir = FSDirectory.open(Paths.get(indexPath));
@@ -104,10 +105,12 @@ public class QueryEngine {
         double precision = 0;
         double recall = 0;
         double jacaard = 0;
+        double f1 = 0;
         if (!derivedSections.isEmpty()) {
           precision = intersect.size() * 1.0 / derivedSections.size();
           recall = intersect.size() * 1.0 / actualSections.size();
           jacaard = intersect.size() * 1.0 / union.size();
+          f1 = 2 * precision * recall / (precision + recall);
         }
 
         if (queryCount < 100) {
@@ -125,10 +128,12 @@ public class QueryEngine {
           System.out.println("Precision: " + precision);
           System.out.println("Recall: " + recall);
           System.out.println("Jacaard: " + jacaard);
+          System.out.println("F1: " + f1);
         }
         precisionSum += precision;
         recallSum += recall;
         jacaardSum += jacaard;
+        f1Sum += f1;
         queryCount++;
 
       }
@@ -136,7 +141,9 @@ public class QueryEngine {
       System.out.printf("Mean Precision = %.2f\n", precisionSum / queryCount);
       System.out.printf("Mean Recall = %.2f\n", recallSum / queryCount);
       System.out.printf("Mean Jacaard Coefficient = %.2f\n", jacaardSum / queryCount);
-      // Incldue F1 scores
+      System.out.printf("Mean F1 Score = %.2f\n", f1Sum / queryCount);
+      HyperParameters.print();
+
     }
     catch (FileNotFoundException e) {
         System.err.printf("Failed to open input file %s\n", jsonl_pages_file);
