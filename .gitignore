@@ -1,0 +1,17 @@
+*.out
+target
+*.jar
+*.cbor
+*.run
+*.qrel
+*.qrels
+*.class
+.lucene
+data
+*.json
+train-pages
+indexj
+full
+*jsonl-splits
+.vscode
+.mvn
