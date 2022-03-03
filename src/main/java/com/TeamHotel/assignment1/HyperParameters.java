@@ -39,4 +39,11 @@ public class HyperParameters {
         }
     }
 
+    public static void print() {
+        System.out.println("The following hyper-parameters are in use:");
+        System.out.println("numRetrieved = " + numSearchResults);
+        System.out.println("numGenerated = " + numHeadingsToPredict);
+        System.out.println("numOccurrences = " + minHeadingOccurrancesForInclusion);
+    }
+
 }
