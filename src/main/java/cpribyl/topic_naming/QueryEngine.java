@@ -1,14 +1,14 @@
-package com.TeamHotel.assignment1;
+package cpribyl.topic_naming;
 
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.lang.System;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -33,7 +33,7 @@ import org.apache.lucene.search.TopDocs;
  * are used to predict the headings of the query article.
  */
 public class QueryEngine {
-  public static int rank(final String jsonl_pages_file, final String indexPath, final int maxQueries) {
+  public static void rank(final String jsonl_pages_file, final String indexPath, final int maxQueries) {
     System.setProperty("file.encoding", "UTF-8");
 
     try {
@@ -47,56 +47,59 @@ public class QueryEngine {
       IndexReader reader = DirectoryReader.open(dir);
       IndexSearcher searcher = new IndexSearcher(reader);
 
-      final Scanner sc  = new Scanner(new FileInputStream(new File(jsonl_pages_file)));
+      final Scanner sc  = new Scanner(new FileInputStream(jsonl_pages_file));
+      // each line is an article, which we use to create a query.
       while (sc.hasNextLine() && queryCount < maxQueries) {
         final JSONObject pageJson = new JSONObject(sc.nextLine());
-        final String queryText = Preprocess.searchtext(StubQuery.fromJson(pageJson).getQueryText());
-        final Article page = Article.fromJson(pageJson);
+
+        // The query text is the article name + the first paragraph.
+        final String queryText = Preprocess.searchText(Objects.requireNonNull(StubQuery.fromJson(pageJson)).getQueryText());
+        final Article page = Article.fromCarJson(pageJson);
+        assert page != null;
         if (page.getSections().size() == 0) {
           // don't query articles with no sections
           continue;
         }
-        QueryParser parser = new QueryParser("fulltext", new StandardAnalyzer());
+
+        // fixme: the standard analyzer does not filter stopwords
+        QueryParser parser = new QueryParser("fulltext", new StandardAnalyzer()); 
         Query query = parser.parse(queryText);
         searcher.setSimilarity(new BM25Similarity());
-        TopDocs hits = searcher.search(query, HyperParameters.numSearchResults);
+        TopDocs retrieved = searcher.search(query, HyperParameters.numSearchResults);
         if (queryCount < 100) {
           System.out.println("\nquery: "+ query + "");
-          System.out.println("Total Results :: " + hits.totalHits);
+          System.out.println("Total Results :: " + retrieved.totalHits);
         }
 
-        Map<Heading, Integer> sectionOccurrances = new HashMap<>();
+        Map<Heading, Integer> sectionOccurrences = new HashMap<>();
 
-        ScoreDoc[] scoreDocs = hits.scoreDocs;
-        for (int i = 0; i < scoreDocs.length; i++) {
-          ScoreDoc score = scoreDocs[i];
+        ScoreDoc[] scoreDocs = retrieved.scoreDocs;
+        for (ScoreDoc score : scoreDocs) {
           final Document doc = searcher.doc(score.doc);
-          assert(doc.getField("headings").stringValue().length() > 2);
-          List.of(
-            doc.getField("headings")
-            .stringValue().split(","))
-          .stream()
-          .map((String section) -> Heading.of(section))
-          .forEach(section -> {
-          Integer previousCount = sectionOccurrances.putIfAbsent(section, 1);
-            if (previousCount != null) {
-              sectionOccurrances.put(section, previousCount + 1);
-            }
-          });
+          assert (doc.getField("headings").stringValue().length() > 2);
+          Stream.of(
+                          doc.getField("headings")
+                                  .stringValue().split(","))
+                  .map(Heading::of)
+                  .forEach(section -> {
+                    Integer previousCount = sectionOccurrences.putIfAbsent(section, 1);
+                    if (previousCount != null) {
+                      sectionOccurrences.put(section, previousCount + 1);
+                    }
+                  });
         }
-        System.out.println("Observed " + sectionOccurrances.size() + " unique section titles");
-        Set<Heading> derivedSections = sectionOccurrances.entrySet().stream()
-          .filter(((Entry<Heading, Integer> e) -> e.getValue() > HyperParameters.minHeadingOccurrancesForInclusion))
-          .sorted((Entry<Heading, Integer> el, Entry<Heading, Integer> er) -> el.getValue().compareTo(er.getValue()))
-          .map(entry -> entry.getKey())
+        System.out.println("Observed " + sectionOccurrences.size() + " unique section titles");
+        Set<Heading> derivedSections = sectionOccurrences.entrySet().stream()
+          .filter(((Entry<Heading, Integer> e) -> e.getValue() > HyperParameters.minHeadingOccurrencesForInclusion))
+          .sorted(Entry.comparingByValue())
+          .map(Entry::getKey)
           .limit(HyperParameters.numHeadingsToPredict)
           .collect(Collectors.toSet());
-        System.out.println("Chose " + derivedSections.size() + " section titles");
+        System.out.println("Selected " + derivedSections.size() + " section titles");
         Set<Heading> actualSections = page.getSections().stream()
-          .map((String section) -> Heading.of(section))
+          .map(Heading::of)
           .collect(Collectors.toSet());
-        Set<Heading> intersect = new HashSet<>();
-        intersect.addAll(actualSections);
+        Set<Heading> intersect = new HashSet<>(actualSections);
         intersect.retainAll(derivedSections);
         Set<Heading> union = new HashSet<>();
         union.addAll(actualSections);
@@ -118,14 +121,10 @@ public class QueryEngine {
         if (queryCount < 100) {
           System.out.println("Matched documents: " + scoreDocs.length);
           System.out.println("Predicted headings:");
-          derivedSections.forEach((heading) -> {
-            System.out.print(heading.getFullText() + " : ");
-          });
+          derivedSections.forEach((heading) -> System.out.print(heading.getFullText() + " : "));
           System.out.println();
           System.out.println("Actual headings:");
-          actualSections.forEach((heading) -> {
-            System.out.print(heading.getFullText() + " : ");
-          });
+          actualSections.forEach((heading) -> System.out.print(heading.getFullText() + " : "));
           System.out.println();
           System.out.println("Precision: " + precision);
           System.out.println("Recall: " + recall);
@@ -149,16 +148,13 @@ public class QueryEngine {
     }
     catch (FileNotFoundException e) {
         System.err.printf("Failed to open input file %s\n", jsonl_pages_file);
-        return 1;
-    } catch (IOException e){
-        e.printStackTrace();
-    } catch (ParseException e) {
+        throw new RuntimeException(e);
+    } catch (IOException | ParseException e){
         e.printStackTrace();
     }
-    return 0;
   }
 
-  public static int rankBaseline(final String jsonl_pages_file, final String indexPath, final int maxQueries) {
+  public static void rankBaseline(final String jsonl_pages_file, final String indexPath, final int maxQueries) {
     System.setProperty("file.encoding", "UTF-8");
 
     try {
@@ -171,11 +167,12 @@ public class QueryEngine {
       IndexReader reader = DirectoryReader.open(dir);
       IndexSearcher searcher = new IndexSearcher(reader);
 
-      final Scanner sc  = new Scanner(new FileInputStream(new File(jsonl_pages_file)));
+      final Scanner sc  = new Scanner(new FileInputStream(jsonl_pages_file));
       while (sc.hasNextLine() && queryCount < maxQueries) {
         final JSONObject pageJson = new JSONObject(sc.nextLine());
         final String queryText = "horseshoe crabs";
-        final Article page = Article.fromJson(pageJson);
+        final Article page = Article.fromCarJson(pageJson);
+        assert page != null;
         if (page.getSections().size() == 0) {
           // don't query articles with no sections
           continue;
@@ -189,41 +186,35 @@ public class QueryEngine {
           System.out.println("Total Results :: " + hits.totalHits);
         }
 
-        Map<Heading, Integer> sectionOccurrances = new HashMap<>();
+        Map<Heading, Integer> sectionOccurrences = new HashMap<>();
 
         ScoreDoc[] scoreDocs = hits.scoreDocs;
-        for (int i = 0; i < scoreDocs.length; i++) {
-          ScoreDoc score = scoreDocs[i];
+        for (ScoreDoc score : scoreDocs) {
           final Document doc = searcher.doc(score.doc);
-          //final String paragraphid = doc.getField("pageid").stringValue();
-          //final float searchScore = score.score;
-          //final int searchRank = i+1;
-          assert(doc.getField("headings").stringValue().length() > 2);
-          List.of(
-            doc.getField("headings")
-            .stringValue().split(","))
-          .stream()
-          .map((String section) -> Heading.of(section))
-          .forEach(section -> {
-          Integer previousCount = sectionOccurrances.putIfAbsent(section, 1);
-            if (previousCount != null) {
-              sectionOccurrances.put(section, previousCount + 1);
-            }
-          });
+          assert (doc.getField("headings").stringValue().length() > 2);
+          Stream.of(
+                          doc.getField("headings")
+                                  .stringValue().split(","))
+                  .map(Heading::of)
+                  .forEach(section -> {
+                    Integer previousCount = sectionOccurrences.putIfAbsent(section, 1);
+                    if (previousCount != null) {
+                      sectionOccurrences.put(section, previousCount + 1);
+                    }
+                  });
         }
-        System.out.println("Observed " + sectionOccurrances.size() + " unique section titles");
-        Set<Heading> derivedSections = sectionOccurrances.entrySet().stream()
-          .filter(((Entry<Heading, Integer> e) -> e.getValue() > HyperParameters.minHeadingOccurrancesForInclusion))
-          .sorted((Entry<Heading, Integer> el, Entry<Heading, Integer> er) -> el.getValue().compareTo(er.getValue()))
-          .map(entry -> entry.getKey())
+        System.out.println("Observed " + sectionOccurrences.size() + " unique section titles");
+        Set<Heading> derivedSections = sectionOccurrences.entrySet().stream()
+          .filter(((Entry<Heading, Integer> e) -> e.getValue() > HyperParameters.minHeadingOccurrencesForInclusion))
+          .sorted(Entry.comparingByValue())
+          .map(Entry::getKey)
           .limit(HyperParameters.numHeadingsToPredict)
           .collect(Collectors.toSet());
         System.out.println("Chose " + derivedSections.size() + " section titles");
         Set<Heading> actualSections = page.getSections().stream()
-          .map((String section) -> Heading.of(section))
+          .map(Heading::of)
           .collect(Collectors.toSet());
-        Set<Heading> intersect = new HashSet<>();
-        intersect.addAll(actualSections);
+        Set<Heading> intersect = new HashSet<>(actualSections);
         intersect.retainAll(derivedSections);
         Set<Heading> union = new HashSet<>();
         union.addAll(actualSections);
@@ -241,14 +232,10 @@ public class QueryEngine {
         if (queryCount < 100) {
           System.out.println("Matched documents: " + scoreDocs.length);
           System.out.println("Predicted headings:");
-          derivedSections.forEach((heading) -> {
-              System.out.print(heading.getFullText() + " : ");
-          });
+          derivedSections.forEach((heading) -> System.out.print(heading.getFullText() + " : "));
           System.out.println();
           System.out.println("Actual headings:");
-          actualSections.forEach((heading) -> {
-              System.out.print(heading.getFullText() + " : ");
-          });
+          actualSections.forEach((heading) -> System.out.print(heading.getFullText() + " : "));
           System.out.println();
           System.out.println("Precision: " + precision);
           System.out.println("Recall: " + recall);
@@ -266,16 +253,21 @@ public class QueryEngine {
       System.out.printf("Mean Jacaard Coefficient = %.2f\n", jacaardSum / queryCount);
 
       HyperParameters.print();
-      // Incldue F1 scores
+      // Include F1 scores
     }
     catch (FileNotFoundException e) {
         System.err.printf("Failed to open input file %s\n", jsonl_pages_file);
-        return 1;
-    } catch (IOException e){
-        e.printStackTrace();
-    } catch (ParseException e) {
+        throw new RuntimeException(e);
+    } catch (IOException | ParseException e){
         e.printStackTrace();
     }
-    return 0;
+  }
+
+  public static void process(String jsonFilename, String outSuffix) {
+
+  }
+
+  public static String getParagraphHeading(String paragraph) {
+    return "";
   }
 }

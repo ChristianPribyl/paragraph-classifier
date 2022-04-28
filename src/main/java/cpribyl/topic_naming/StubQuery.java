@@ -1,4 +1,4 @@
-package com.TeamHotel.assignment1;
+package cpribyl.topic_naming;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -62,7 +62,4 @@ public class StubQuery {
         }
     }
 
-    public String getPageId() {
-        return id;
-    }
 }

@@ -1,4 +1,4 @@
-package com.TeamHotel.assignment1;
+package cpribyl.topic_naming;
 
 import java.io.InputStream;
 import java.util.Scanner;
@@ -8,11 +8,10 @@ import java.util.HashSet;
 /**
  * Stopwords
  * Singleton for loading and using stopwords.
- * @NotThreadSafe
  */
 class Stopwords {
     static Set<String> stopWords;
-    final static String stopwordFile = "stop.txt";
+    final static String stopWordFile = "stop.txt";
     static boolean stopwordsLoaded = false;
 
     public static boolean contains(final String word) {
@@ -24,7 +23,7 @@ class Stopwords {
         if (!stopwordsLoaded) {
             stopWords = new HashSet<>();
             try {
-                InputStream file = Thread.currentThread().getContextClassLoader().getResourceAsStream(stopwordFile);
+                InputStream file = Thread.currentThread().getContextClassLoader().getResourceAsStream(stopWordFile);
                 assert file != null;
                 final Scanner sc = new Scanner(file);
                 while (sc.hasNextLine()) {

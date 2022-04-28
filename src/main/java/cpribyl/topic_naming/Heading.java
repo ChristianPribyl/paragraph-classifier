@@ -1,6 +1,7 @@
-package com.TeamHotel.assignment1;
+package cpribyl.topic_naming;
 
-import java.util.List;
+import java.util.stream.Stream;
+
 import org.tartarus.snowball.ext.porterStemmer;
 
 final class Heading {
@@ -15,8 +16,8 @@ final class Heading {
     public static Heading of(final String fullText) {
         final StringBuilder preprocessedText = new StringBuilder();
         final porterStemmer stemmer = new porterStemmer();
-        List.of(fullText.replaceAll("\\p{Punct}", "").split("\\s+")).stream()
-        .map((word) -> word.toLowerCase())
+        Stream.of(fullText.replaceAll("\\p{Punct}", "").split("\\s+"))
+        .map(String::toLowerCase)
         .map((String word) -> {
             // don't stem words with numbers.  They might be important
             if (word.matches(".*\\d.*")) {
@@ -54,9 +55,4 @@ final class Heading {
     public String getFullText() {
         return fullText;
     }
-
-    public String getProcessedText() {
-        return processedText;
-    }
-
 }
