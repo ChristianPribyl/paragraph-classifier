@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <lucene.version>8.9.0</lucene.version>
+        <lucene.version>8.11.1</lucene.version>
     </properties>
 
     <repositories>
@@ -28,11 +28,7 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>com.github.TREMA-UNH</groupId>
             <artifactId>trec-car-tools-java</artifactId>
@@ -43,11 +39,20 @@
             <artifactId>cbor</artifactId>
             <version>0.9</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>8.9.0</version>
+            <version>${lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+            <version>8.11.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.json/json -->
@@ -94,7 +99,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>cpribyl.topic_naming.Main</mainClass>
+                            <mainClass>cpribyl.topic_naming.app.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

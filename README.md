@@ -1,40 +1,99 @@
-* Building
-mvnw clean package
+# Heading Predictor
+An engine for predicting section headings in articles.
 
-* Prepare data (c01)
+The model takes a paragraph as input, and generates a heading as output.
 
+It is evaluated on three tasks.
+
+1. Given a paragraph, predict the heading of the section that paragraph came from.
+2. Given all paragraphs in an article, predict the set of unique headings used in an article.
+3. Given all paragraphs in an article, cluster the paragraphs such that two paragraphs from 
+the same section are in the same cluster.
+
+## Building
+Build with maven
+```
+mvn clean package
+```
+Or use the included maven wrapper
+```
+./mvnw clean package
+```
+
+## Preparing the data (c01)
+```
 #!/bin/bash
-mkdir -p ./data
-for i in 0 1 2 3 4
-do
-  cp /data/trec-car-2022/enwiki-2022-01-01-package/trainLargePackage/fold-${i}-train.pages.jsonl-splits/pages-1.jsonl.gz ./data/articles-${i}.jsonl.gz
-  gzip -d articles-${i}.jsonl.gz
-  rm ./data/articles-${i}.jsonl.gz
-  ls -l ./data/articles-${i}.jsonl
-done
+mkdir -p ./kb-corpus
+cp /data/trec-car-2022/en-wiki-01012022/unprocessedAllButBenchmarkPackage/fold-*-unprocessedAllButBenchmark.jsonl-splits ./kb-corpus/
+find ./kb-corpus -name *.gz | xargs gzip -d
+mkdir -p ./eval-corpus
+cp /data/trec-car-2022/en-wiki-01012022/benchmarks/car-train-large/car-train-large.train/fold-*-train.pages.jsonl-splits ./eval-corpus/
+find ./eval-corpus -name *.gz | xargs gzip -d
 
-* Create index
+mkdir -p results
+```
 
-`java -jar target/outlines-1.jar index <new-index-location> <jsonl-files>...`
+## Preparing the data (local)
+```
+#!/bin/bash
+mkdir -p ./kb-corpus
+rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/unprocessedAllButBenchmarkPackage/fold-*-unprocessedAllButBenchmark.jsonl-splits ./kb-corpus/
+find ./kb-corpus -name *.gz | xargs gzip -d
+mkdir -p ./eval-corpus
+rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/benchmarks/car-train-large/car-train-large.train/fold-*-train.pages.jsonl-splits ./eval-corpus/
+find ./eval-corpus -name *.gz | xargs gzip -d
 
-example: `java -jar target/outlines-1.jar index ./index.lucene ./data/articles-1.jsonl ./data/articles-2.jsonl ./data/articles-3.jsonl ./data/articles-4.jsonl`
+mkdir -p results
+```
 
-`<num-index-location>` is the directory that will be created to store the index
+## Create the knowledge-base index
+```
+java -jar target/outlines-1.jar kb-index <new-index-location> <jsonl-files>...
+```
+
+example (for this dataset): 
+```
+find ./kb-corpus -name *.jsonl | xargs java -jar target/outlines-1.jar kb-index ./kb
+```
+
+`<new-index-location>` is the directory that will be created to store the index
 
 `<jsonl-files>` is a list of files containing wikipedia articles in CAR jsonl format.
-Any number of files can be specified and they will all be parsed into the index.
+Any number of files can be specified, and they will all be parsed into the index.
 
-* Run outline predictor
+## Run all benchmarks
+```
+rm results/*
 
-`java -jar target/outlines-1.jar query <index-location> <num-queries> <jsonl-files>...`
+java -jar target/outlines-1.jar benchmark <index-location> <max-articles> <jsonl-files>...
+```
 
-example: `java -jar target/outlines-1.jar query ./index.lucene 100 ./data/articles-0.jsonl`
+example (for this dataset): 
+```
+rm results/*
 
-`<index-location>` is the location of an existing lucene index
+find ./eval-corpus -name *.jsonl | xargs java -jar target/outlines-1.jar benchmark ./kb 100
+```
 
-`<num-queries>` is the maximum number of queries that should be run
+`<index-location>` is the location of an existing knowledge-base index.
 
-`<jsonl-files>` same as above.  I used the jsonl files extracted from
-trec-car-2022/enwiki-2022-01-01-package/trainLargePackage/fold-<N>-train.pages.jsonl-splits/pages-1.jsonl.gz
+`<max-articles>` is the maximum number of articles that should be used to generate queries.
 
-The fold-0 file is used to generate queries, and all the others are used to create the index.
+`<jsonl-files>` jsonl files containing articles used to generate test queries.
+
+## Evaluate the benchmarks
+
+### Heading prediction
+```
+java -jar target/outlines-1.jar paragraph-heading-eval results/predictedParagraphHeadings.log
+```
+
+### Clustering
+```
+java -jar target/outlines-1.jar cluster-eval results/predictedClusters.log
+```
+
+### Heading-Set
+```
+java -jar target/outlines-1.jar heading-set-eval results/predictedHeadingSets.log
+```

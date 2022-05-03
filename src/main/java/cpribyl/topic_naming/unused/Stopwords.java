@@ -1,4 +1,7 @@
-package cpribyl.topic_naming;
+package cpribyl.topic_naming.unused;
+
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 import java.io.InputStream;
 import java.util.Scanner;
@@ -9,7 +12,7 @@ import java.util.HashSet;
  * Stopwords
  * Singleton for loading and using stopwords.
  */
-class Stopwords {
+public final class Stopwords {
     static Set<String> stopWords;
     final static String stopWordFile = "stop.txt";
     static boolean stopwordsLoaded = false;
@@ -42,5 +45,9 @@ class Stopwords {
             }
             stopwordsLoaded = true;
         }
+    }
+
+    public static void printLuceneStopwords() {
+        new EnglishAnalyzer().getStopwordSet().forEach((Object o) -> System.out.println((char[])o));
     }
 }

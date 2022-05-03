@@ -1,4 +1,4 @@
-package cpribyl.topic_naming;
+package cpribyl.topic_naming.unused;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -33,6 +33,7 @@ import org.apache.lucene.search.TopDocs;
  * are used to predict the headings of the query article.
  */
 public class QueryEngine {
+  /*
   public static void rank(final String jsonl_pages_file, final String indexPath, final int maxQueries) {
     System.setProperty("file.encoding", "UTF-8");
 
@@ -43,9 +44,9 @@ public class QueryEngine {
       double f1Sum = 0;
       int queryCount = 0;
 
-      Directory dir = FSDirectory.open(Paths.get(indexPath));
-      IndexReader reader = DirectoryReader.open(dir);
-      IndexSearcher searcher = new IndexSearcher(reader);
+      final Directory dir = FSDirectory.open(Paths.get(indexPath));
+      final IndexReader reader = DirectoryReader.open(dir);
+      final IndexSearcher searcher = new IndexSearcher(reader);
 
       final Scanner sc  = new Scanner(new FileInputStream(jsonl_pages_file));
       // each line is an article, which we use to create a query.
@@ -153,7 +154,8 @@ public class QueryEngine {
         e.printStackTrace();
     }
   }
-
+*/
+  /*
   public static void rankBaseline(final String jsonl_pages_file, final String indexPath, final int maxQueries) {
     System.setProperty("file.encoding", "UTF-8");
 
@@ -262,11 +264,12 @@ public class QueryEngine {
         e.printStackTrace();
     }
   }
-
+  */
+/*
   public static void process(String jsonFilename, String outSuffix) {
 
   }
-
+*/
   public static String getParagraphHeading(String paragraph) {
     return "";
   }
