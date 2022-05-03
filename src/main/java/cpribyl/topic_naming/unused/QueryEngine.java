@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -179,7 +180,7 @@ public class QueryEngine {
           // don't query articles with no sections
           continue;
         }
-        QueryParser parser = new QueryParser("fulltext", new StandardAnalyzer());
+        QueryParser parser = new QueryParser("fulltext", new StopAnalyzer());
         Query query = parser.parse(queryText);
         searcher.setSimilarity(new BM25Similarity());
         TopDocs hits = searcher.search(query, HyperParameters.numSearchResults);
