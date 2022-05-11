@@ -24,7 +24,7 @@ public class MutableArticle extends Article {
     List<MutableSection> sections = new LinkedList<>();
     while (sc.hasNext() && sc.hasNextLine()) {
       String line = sc.nextLine();
-      while (!line.isEmpty()) {
+      while (!line.isEmpty() && sc.hasNextLine()) {
         sectionText.append(line).append('\n');
         line = sc.nextLine();
       }

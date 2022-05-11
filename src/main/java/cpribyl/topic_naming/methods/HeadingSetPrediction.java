@@ -61,6 +61,7 @@ public class HeadingSetPrediction {
         double f1;
         try {
           f1 = (precision * recall) / (precision + recall);
+          if (Double.isNaN(f1)) f1 = 0;
         } catch (ArithmeticException ex) {
           f1 = 0;
         }

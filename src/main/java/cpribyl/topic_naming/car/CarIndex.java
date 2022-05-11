@@ -6,9 +6,16 @@ import cpribyl.topic_naming.index.Index;
 import cpribyl.topic_naming.index.Paragraph;
 import cpribyl.topic_naming.index.Section;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseFilter;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.LetterTokenizer;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
+import org.apache.lucene.analysis.en.PorterStemFilter;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -117,12 +124,23 @@ public final class CarIndex extends Index {
 
   @Override
   protected Analyzer getAnalyzer() throws IOException {
-    return CustomAnalyzer.builder()
-              .withTokenizer("letter")
-              .addTokenFilter("lowercase")
-              .addTokenFilter("stop")
-              .addTokenFilter("porterstem")
-              .build();
+    //return CustomAnalyzer.builder()
+    //          .withTokenizer("letter")
+    //          .addTokenFilter("lowercase")
+    //          .addTokenFilter("stop")
+    //          .addTokenFilter("porterstem")
+    //          .build();
+
+    return new Analyzer() {
+      @Override
+      protected Analyzer.TokenStreamComponents createComponents(String fieldName) {
+        LetterTokenizer src = new LetterTokenizer();
+        TokenStream result = new LowerCaseFilter(src);
+        result = new StopFilter(result, new StandardAnalyzer().getStopwordSet());
+        result = new PorterStemFilter(result);
+        return new Analyzer.TokenStreamComponents(src, result);
+      }
+    };
   }
 
   public Optional<String> getFulltext(String carId) throws ParseException, IOException {

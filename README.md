@@ -40,7 +40,7 @@ mkdir -p ./kb-corpus
 rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/unprocessedAllButBenchmarkPackage/fold-*-unprocessedAllButBenchmark.jsonl-splits ./kb-corpus/
 find ./kb-corpus -name *.gz | xargs gzip -d
 mkdir -p ./eval-corpus
-rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/benchmarks/car-train-large/car-train-large.train/fold-*-train.pages.jsonl-splits ./eval-corpus/
+rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/benchmarks/benchmarkY1/benchmarkY1.test/fold-*-train.pages.jsonl-splits ./eval-corpus/
 find ./eval-corpus -name *.gz | xargs gzip -d
 
 mkdir -p results
@@ -72,7 +72,7 @@ example (for this dataset):
 ```
 rm results/*
 
-find ./eval-corpus -name *.jsonl | xargs java -jar target/outlines-1.jar benchmark ./kb 100
+find ./eval-corpus -name *.jsonl | xargs java -jar target/outlines-1.jar benchmark ./kb 200
 ```
 
 `<index-location>` is the location of an existing knowledge-base index.

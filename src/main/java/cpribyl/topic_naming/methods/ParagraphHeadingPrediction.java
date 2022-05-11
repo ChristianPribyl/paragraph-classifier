@@ -61,8 +61,6 @@ public class ParagraphHeadingPrediction {
       }
     }
 
-    System.out.println("HEREH");
-
     var scores = headings.keySet().stream()
             .map(article -> 1.0 * correctHeadings.getOrDefault(article, 0) / headings.get(article))
             .collect(Collectors.toList());
