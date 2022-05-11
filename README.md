@@ -84,16 +84,24 @@ find ./eval-corpus -name *.jsonl | xargs java -jar target/outlines-1.jar benchma
 ## Evaluate the benchmarks
 
 ### Heading prediction
+Given a paragraph, predict the heading of section that paragraph was taken from.
+This task can be used to derive clusters (paragraphs with the same predicted section heading),
+or to classify paragraphs or sections (these paragraphs are about "applications in aerospace").
 ```
 java -jar target/outlines-1.jar paragraph-heading-eval results/predictedParagraphHeadings.log
 ```
 
 ### Clustering
+Given a set of paragraphs in an article, assign them each to disjoint sets which each represent
+a section from the original article.
 ```
 java -jar target/outlines-1.jar cluster-eval results/predictedClusters.log
 ```
 
 ### Heading-Set
+Given the paragraphs that compose an article, predict the collection of headings that article contains.
+This task can be leveraged for query expansion, by indirectly identifying the major topics
+discussed in the article.
 ```
 java -jar target/outlines-1.jar heading-set-eval results/predictedHeadingSets.log
 ```
