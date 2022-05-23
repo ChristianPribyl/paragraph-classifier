@@ -20,7 +20,7 @@ Or use the included maven wrapper
 ./mvnw clean package
 ```
 
-## Preparing the data (c01)
+## Preparing the data (FIXME: use publicly available wikimarks dataset)
 ```
 #!/bin/bash
 mkdir -p ./kb-corpus
@@ -28,19 +28,6 @@ cp /data/trec-car-2022/en-wiki-01012022/unprocessedAllButBenchmarkPackage/fold-*
 find ./kb-corpus -name *.gz | xargs gzip -d
 mkdir -p ./eval-corpus
 cp /data/trec-car-2022/en-wiki-01012022/benchmarks/car-train-large/car-train-large.train/fold-*-train.pages.jsonl-splits ./eval-corpus/
-find ./eval-corpus -name *.gz | xargs gzip -d
-
-mkdir -p results
-```
-
-## Preparing the data (local)
-```
-#!/bin/bash
-mkdir -p ./kb-corpus
-rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/unprocessedAllButBenchmarkPackage/fold-*-unprocessedAllButBenchmark.jsonl-splits ./kb-corpus/
-find ./kb-corpus -name *.gz | xargs gzip -d
-mkdir -p ./eval-corpus
-rsync -e 'ssh -p 2281' -a clp1034@c01.cs.unh.edu:/data/trec-car-2022/en-wiki-01012022/benchmarks/benchmarkY1/benchmarkY1.test/fold-*-train.pages.jsonl-splits ./eval-corpus/
 find ./eval-corpus -name *.gz | xargs gzip -d
 
 mkdir -p results
